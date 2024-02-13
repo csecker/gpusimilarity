@@ -12,6 +12,8 @@ def parse_args():
     parser.add_argument('dbname', help=".fsim file containing fingerprint "
                         "data to be searched")
     parser.add_argument('dbkey', default="", help="Key for fsim file")
+    parser.add_argument('fingerprint', default='Morgan', type=str,
+                        help="Fingerprint to use for similarity search")
     return parser.parse_args()
 
 
@@ -25,12 +27,13 @@ def main():
     dbname = args.dbname
     dbkey = args.dbkey
     socket.connectToServer('gpusimilarity')
+    fp = args.fingerprint
 
     while smiles and smiles.lower() not in ('quit', 'exit'):
         return_count = 20
         similarity_cutoff = 0
 
-        fp_binary, _ = smiles_to_fingerprint_bin(smiles)
+        fp_binary, _ = smiles_to_fingerprint_bin(smiles, fp)
         fp_qba = QtCore.QByteArray(fp_binary)
 
         output_qba = QtCore.QByteArray()

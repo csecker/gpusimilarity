@@ -20,6 +20,8 @@ def parse_args():
                                      'Binary FingerprintDB')
     parser.add_argument('inputfile')
     parser.add_argument('outputfile')
+    parser.add_argument('fingerprint', default='Morgan', type=str,
+                        help="Fingerprint to use for similarity search")
     parser.add_argument('--dbkey', default="",
                         help="Provide a dbkey, default is an empty string")
     parser.add_argument('--trustSmiles', action='store_true', default=False)
@@ -107,6 +109,8 @@ def main():
         dview = rc[:]
     qf = QtCore.QFile(args.outputfile)
     qf.open(QtCore.QIODevice.WriteOnly)
+    global fp
+    fp = args.fingerprint
 
     count = 0
 
@@ -123,7 +127,7 @@ def main():
     print(len(lines))
     while lines != []:
         rows = gpusim_utils.split_lines_add_fp(
-            lines, dview=dview, trust_smiles=args.trustSmiles)
+            lines, fp, dview=dview, trust_smiles=args.trustSmiles)
         filtered_rows = [row for row in rows if row is not None]
         count += len(filtered_rows)
         for row in filtered_rows:

@@ -71,7 +71,7 @@ class GPUSimHandler(BaseHTTPRequestHandler):
     def get_data(self, dbnames, dbkeys, src_smiles, return_count,
                  similarity_cutoff, request_num):
         global socket
-        fp_binary, canon_smile = gpusim_utils.smiles_to_fingerprint_bin(src_smiles)
+        fp_binary, canon_smile = gpusim_utils.smiles_to_fingerprint_bin(src_smiles, fp)
         fp_qba = QtCore.QByteArray(fp_binary)
 
         output_qba = QtCore.QByteArray()
@@ -270,6 +270,8 @@ def parse_args():
     parser.add_argument('--gpu_bitcount', default='0',
                         help="Provide the maximum bitcount for fingerprints on GPU") #noqa
     parser.add_argument('--debug', action='store_true', help="Run the backend inside GDB") #noqa
+    parser.add_argument('--fingerprint', default='Morgan', type=str,
+                        help="Fingerprint to use for similarity search")
     return parser.parse_args()
 
 
@@ -298,6 +300,8 @@ def main():
     cmdline += args.dbnames
     backend_proc = subprocess.Popen(cmdline)
     setup_socket(app)
+    global fp
+    fp = args.fingerprint
 
     if args.http_interface:
         handler = GPUSimHTTPHandler
