@@ -71,7 +71,7 @@ class GPUSimHandler(BaseHTTPRequestHandler):
     def get_data(self, dbnames, dbkeys, src_smiles, return_count,
                  similarity_cutoff, request_num):
         global socket
-        fp_binary, canon_smile = gpusim_utils.smiles_to_fingerprint_bin(src_smiles, fp)
+        fp_binary, canon_smile = gpusim_utils.smiles_to_fingerprint_bin(src_smiles, fp, query=True)
         fp_qba = QtCore.QByteArray(fp_binary)
 
         output_qba = QtCore.QByteArray()

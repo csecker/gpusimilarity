@@ -103,6 +103,36 @@ struct TanimotoFunctor {
     };
 };
 
+/**
+ * @internal
+ * Functor used to perform "All Probe Bits Match" on GPGPU via thrust::transform
+ */
+struct AllProbeBitsMatchFunctor {
+
+    const int* m_ref_fp;
+    const int m_fp_intsize;
+    const int* m_dbdata;
+
+    AllProbeBitsMatchFunctor(const DFingerprint& ref_fp, int fp_intsize,
+                             const device_vector<int>& dbdata)
+        : m_ref_fp(ref_fp.data().get()), m_fp_intsize(fp_intsize),
+          m_dbdata(dbdata.data().get()) {};
+
+    __device__ int operator()(const int& fp_index) const
+    {
+        int offset = m_fp_intsize * fp_index;
+        for (int i = 0; i < m_fp_intsize; i++) {
+            const int fp1 = m_ref_fp[i];              // Reference fingerprint segment
+            const int fp2 = m_dbdata[offset + i];    // Database fingerprint segment
+            // Check if all bits in fp1 are set in fp2
+            if ((fp1 & fp2) != fp1) {
+                return 0; // If any bit in fp1 is not set in fp2, return 0
+            }
+        }
+        return 1; // All bits match across all segments
+    };
+};
+
 struct StorageResultObject {
     vector<SortableResult> m_result_data;
     vector<int> m_approximate_matching_results;
@@ -257,9 +287,8 @@ void FingerprintDB::search_storage(
         // fingerprint
         thrust::transform(d_results_indices.begin(), d_results_indices.end(),
                           d_results_scores.begin(),
-                          TanimotoFunctor(d_ref_fp, folded_fp_intsize,
-                                          *(storage->m_priv->d_data),
-                                          similarity_cutoff));
+                          AllProbeBitsMatchFunctor(d_ref_fp, folded_fp_intsize,
+                                          *(storage->m_priv->d_data)));
         auto indices_end = d_results_indices.end();
         auto scores_end = d_results_scores.end();
         if (similarity_cutoff > 0) {
