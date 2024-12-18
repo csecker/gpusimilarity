@@ -112,14 +112,18 @@ struct AllProbeBitsMatchFunctor {
     const int* m_ref_fp;
     const int m_fp_intsize;
     const int* m_dbdata;
+    const float m_similarity_cutoff;
 
     AllProbeBitsMatchFunctor(const DFingerprint& ref_fp, int fp_intsize,
-                             const device_vector<int>& dbdata)
+                             const device_vector<int>& dbdata, float similarity_cutoff)
         : m_ref_fp(ref_fp.data().get()), m_fp_intsize(fp_intsize),
-          m_dbdata(dbdata.data().get()) {};
+          m_dbdata(dbdata.data().get()),
+          m_similarity_cutoff(similarity_cutoff){};
 
-    __device__ int operator()(const int& fp_index) const
+    __device__ float operator()(const int& fp_index) const
     {
+        int total = 0;
+        int common = 0;
         int offset = m_fp_intsize * fp_index;
         for (int i = 0; i < m_fp_intsize; i++) {
             const int fp1 = m_ref_fp[i];              // Reference fingerprint segment
@@ -128,8 +132,16 @@ struct AllProbeBitsMatchFunctor {
             if ((fp1 & fp2) != fp1) {
                 return 0; // If any bit in fp1 is not set in fp2, return 0
             }
+            total += __popc(fp1) + __popc(fp2);
+            common += __popc(fp1 & fp2);
+            // Other option: Count bits not set in fp2
+            // total_diff_bits += __popc(~fp1 & fp2);
         }
-        return 1; // All bits match across all segments
+        float score =
+            static_cast<float>(common) / static_cast<float>(total - common);
+        return score >= m_similarity_cutoff ? score : 0;
+        // Other option: return the number of bits that are not set in fp2
+        // return total_diff_bits <= m_similarity_cutoff ? total_diff_bits + 1 : 0;
     };
 };
 
@@ -288,7 +300,8 @@ void FingerprintDB::search_storage(
         thrust::transform(d_results_indices.begin(), d_results_indices.end(),
                           d_results_scores.begin(),
                           AllProbeBitsMatchFunctor(d_ref_fp, folded_fp_intsize,
-                                          *(storage->m_priv->d_data)));
+                                          *(storage->m_priv->d_data),
+                                          similarity_cutoff));
         auto indices_end = d_results_indices.end();
         auto scores_end = d_results_scores.end();
         if (similarity_cutoff > 0) {
