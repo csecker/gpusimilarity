@@ -100,7 +100,8 @@ struct TanimotoFunctor {
         }
         float score =
             static_cast<float>(common) / static_cast<float>(total - common);
-        return score >= m_similarity_cutoff ? score : 0;
+        float inverted_score = 1.0f - score; // Invert the score
+        return inverted_score <= m_similarity_cutoff ? inverted_score : 1;
     };
 };
 
@@ -263,7 +264,7 @@ void FingerprintDB::search_storage(
                                           similarity_cutoff));
         auto indices_end = d_results_indices.end();
         auto scores_end = d_results_scores.end();
-        if (similarity_cutoff > 0) {
+        if (similarity_cutoff < 1) {
             indices_end = thrust::remove_if(
                 d_results_indices.begin(), d_results_indices.end(),
                 d_results_scores.begin(), thrust::logical_not<bool>());
@@ -280,7 +281,7 @@ void FingerprintDB::search_storage(
         // Sort scores & indices vectors descending on score
         thrust::sort_by_key(d_results_scores.begin(), scores_end,
                             d_results_indices.begin(),
-                            thrust::greater<float>());
+                            thrust::less<float>());
 
         int results_to_consider = 0;
         results_to_consider = std::min(
@@ -364,7 +365,7 @@ void FingerprintDB::search(const Fingerprint& query, const QString& dbkey,
     for (auto& future : futures) {
         future.waitForFinished();
     }
-    std::sort(sortable_results.rbegin(), sortable_results.rend());
+    std::sort(sortable_results.begin(), sortable_results.end());
     approximate_result_count =
         std::accumulate(results.m_approximate_matching_results.begin(),
                         results.m_approximate_matching_results.end(), 0);
