@@ -17,6 +17,7 @@ from rdkit import Chem, DataStructs
 from rdkit.Chem import Draw
 from rdkit.Chem import rdMolDescriptors
 from rdkit.Chem import rdFingerprintGenerator
+from rdkit.Avalon import pyAvalonTools
 
 # NOTE:  GPGPU backend requires fingerprint size to be sizeof(int) divisible
 BITCOUNT = 1024
@@ -53,7 +54,7 @@ def compress_qbas(qba_list, dview=None):
         return map(QtCore.qCompress, qba_list)
 
 
-def smiles_to_fingerprint_bin(smiles, fingerprint='Morgan', trust_smiles=False):
+def smiles_to_fingerprint_bin(smiles, fingerprint='Morgan', trust_smiles=False, query=False):
     mol = Chem.MolFromSmiles(smiles, sanitize=(not trust_smiles))
     if mol is None:
         raise RuntimeError("Bad structure")
@@ -71,7 +72,8 @@ def smiles_to_fingerprint_bin(smiles, fingerprint='Morgan', trust_smiles=False):
     if fingerprint == "TopologicalTorsions":
         ttgen = rdFingerprintGenerator.GetTopologicalTorsionGenerator(fpSize=BITCOUNT)
         fp = ttgen.GetFingerprint(mol)
-
+    if fingerprint == "Avalon":
+        fp = pyAvalonTools.GetAvalonFP(mol, BITCOUNT, isQuery=query)
     canon_smiles = Chem.MolToSmiles(mol)
     canon_smiles = str.encode(canon_smiles)
     return DataStructs.BitVectToBinaryText(fp), canon_smiles

@@ -16,6 +16,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/sequence.h>
 #include <thrust/sort.h>
+#include <thrust/remove.h>
 
 #include <QDebug>
 #include <QFuture>

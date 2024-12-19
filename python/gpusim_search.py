@@ -33,7 +33,7 @@ def main():
         return_count = 20
         similarity_cutoff = 0
 
-        fp_binary, _ = smiles_to_fingerprint_bin(smiles, fp)
+        fp_binary, _ = smiles_to_fingerprint_bin(smiles, fp, query=True)
         fp_qba = QtCore.QByteArray(fp_binary)
 
         output_qba = QtCore.QByteArray()
