@@ -16,6 +16,7 @@
 #include <thrust/device_vector.h>
 #include <thrust/sequence.h>
 #include <thrust/sort.h>
+#include <thrust/remove.h>
 
 #include <QDebug>
 #include <QFuture>
@@ -324,9 +325,7 @@ void FingerprintDB::search_storage(
                             thrust::greater<float>());
 
         int results_to_consider = 0;
-        results_to_consider = std::min(
-            indices_size, max_return_count * m_fold_factor *
-                              static_cast<int>(std::log2(2 * m_fold_factor)));
+        results_to_consider = results_to_consider = indices_size; // Consider all results
 
         indices.assign(d_results_indices.begin(),
                        d_results_indices.begin() + results_to_consider);
