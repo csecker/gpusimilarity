@@ -62,7 +62,8 @@ def smiles_to_fingerprint_bin(smiles, fingerprint='Morgan', trust_smiles=False, 
         mol.UpdatePropertyCache()
         Chem.FastFindRings(mol)
     if fingerprint == "Morgan":
-        fp = rdMolDescriptors.GetMorganFingerprintAsBitVect(mol, 2, BITCOUNT)
+        mgngen = rdFingerprintGenerator.GetMorganGenerator(radius=3, fpSize=BITCOUNT)
+        fp = mgngen.GetFingerprint(mol)
     if fingerprint == "RDKit":
         rdkgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=BITCOUNT)
         fp = rdkgen.GetFingerprint(mol)
