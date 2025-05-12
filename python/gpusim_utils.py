@@ -67,7 +67,7 @@ def smiles_to_fingerprint_bin(smiles, fingerprint='Morgan', trust_smiles=False, 
     if fingerprint == "RDKit":
         rdkgen = rdFingerprintGenerator.GetRDKitFPGenerator(fpSize=BITCOUNT)
         fp = rdkgen.GetFingerprint(mol)
-    if fingerprint == "AtomPairs":
+    if fingerprint == "AtomPair":
         apgen = rdFingerprintGenerator.GetAtomPairGenerator(fpSize=BITCOUNT)
         fp = apgen.GetFingerprint(mol)
     if fingerprint == "TopologicalTorsions":
